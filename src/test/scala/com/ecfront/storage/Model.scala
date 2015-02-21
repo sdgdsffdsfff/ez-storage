@@ -1,14 +1,12 @@
 package com.ecfront.storage
 
-import com.ecfront.common.Ignore
-
 import scala.beans.BeanProperty
 
 @Entity(idField = "id")
 case class Role() extends IdModel {
   @BeanProperty var code: String = _
   @BeanProperty var name: String = _
-  @Ignore
+  @ManyToMany(mapping = "Resource", master = true, fetch = false)
   @BeanProperty var resourceIds: List[String] = _
 }
 
@@ -21,9 +19,7 @@ case class Resource() extends IdModel {
 case class Account() extends IdModel {
   @BeanProperty var userId: String = _
   @BeanProperty var password: String = _
-  @Ignore
-  @BeanProperty var organizationIds: List[String] = _
-  @Ignore
+  @ManyToMany(mapping = "Role", master = false, fetch = true)
   @BeanProperty var roleIds: List[String] = _
 }
 

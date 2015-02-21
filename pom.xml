@@ -36,7 +36,7 @@
 
     <properties>
         <jdk.version>1.8</jdk.version>
-        <ez-common.version>0.2.8</ez-common.version>
+        <ez-common.version>0.2.9</ez-common.version>
         <ez-dbutils.version>2.2</ez-dbutils.version>
     </properties>
 

@@ -2,10 +2,10 @@ package com.ecfront.storage
 
 import java.lang.reflect.ParameterizedType
 
-import com.ecfront.common.BeanHelper
+import com.ecfront.common.{BeanHelper, Ignore}
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
-trait StorageService[M <: AnyRef, Q <: AnyRef] extends LazyLogging {
+trait Storable[M <: AnyRef, Q <: AnyRef] extends LazyLogging {
 
   protected val modelClazz = this.getClass.getGenericInterfaces()(0).asInstanceOf[ParameterizedType].getActualTypeArguments()(0).asInstanceOf[Class[M]]
   protected val tableName = modelClazz.getSimpleName
@@ -14,12 +14,26 @@ trait StorageService[M <: AnyRef, Q <: AnyRef] extends LazyLogging {
     null
   }
   protected val idField = classAnnotation.idField
+  protected val allAnnotations = BeanHelper.findFieldAnnotations(modelClazz)
+  protected val allFields = BeanHelper.findFields(modelClazz)
+  protected val ignoreFields =allFields.filter{
+    field =>
+      allAnnotations.filter(_.fieldName == field._1).exists {
+        ann =>
+          ann.toString == classOf[Ignore].getName || ann.toString == classOf[ManyToMany].getName
+      }
+  }.map(_._1).toList
+  protected val persistentFields=allFields.filter(field => !ignoreFields.contains(field._1))
 
   logger.info( """Create Storage Service: model: %s""".format(modelClazz.getSimpleName))
 
   protected def init(modelClazz: Class[M]): Unit
 
   init(modelClazz)
+
+  protected def getMapValue(model:M):Map[String, Any] ={
+    BeanHelper.findValues(model,ignoreFields)
+  }
 
   def getById(id: String, request: Q): Option[M]
 
@@ -56,7 +70,7 @@ trait StorageService[M <: AnyRef, Q <: AnyRef] extends LazyLogging {
   protected def appendAuth(request: Q): String
 
   protected def getIdValue(model: AnyRef): String = {
-    BeanHelper.getValue(model, idField).getOrElse(null).asInstanceOf[String]
+    BeanHelper.getValue(model, idField).orNull.asInstanceOf[String]
   }
 
 }

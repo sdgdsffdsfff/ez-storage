@@ -1,15 +1,32 @@
 package com.ecfront.storage
 
-import com.ecfront.common.BeanHelper
 import com.ecfront.easybi.dbutils.exchange.{DB, DS}
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
 import scala.collection.JavaConversions._
 
-trait JDBCService[M <: AnyRef, Q <: AnyRef] extends StorageService[M, Q] {
+trait JDBCStorable[M <: AnyRef, Q <: AnyRef] extends Storable[M, Q] {
+
+  private def initManyToMany(clazz: Class[M]): Unit = {
+    allAnnotations.filter(ann => ann.annotation.isInstanceOf[ManyToMany]).foreach {
+      ann =>
+        val annotation = ann.annotation.asInstanceOf[ManyToMany]
+        if (annotation.master) {
+          val relTableName = Model.REL_FLAG + tableName + "_" + annotation.mapping
+          JDBCStorable.db.createTableIfNotExist(
+            relTableName,
+            Map[String, String](
+              tableName + "_" + Model.ID_FLAG -> "String",
+              annotation.mapping + "_" + Model.ID_FLAG -> "String"
+            ),
+            null)
+        }
+    }
+  }
 
   override protected def init(modelClazz: Class[M]): Unit = {
-    JDBCService.db.createTableIfNotExist(modelClazz.getSimpleName, BeanHelper.getFields(modelClazz), idField)
+    JDBCStorable.db.createTableIfNotExist(modelClazz.getSimpleName, persistentFields, idField)
+    initManyToMany(modelClazz)
   }
 
   override def getById(id: String, request: Q): Option[M] = {
@@ -17,7 +34,7 @@ trait JDBCService[M <: AnyRef, Q <: AnyRef] extends StorageService[M, Q] {
   }
 
   override def getByCondition(condition: String, request: Q): Option[M] = {
-    Some(JDBCService.db.getObject("SELECT * FROM " + tableName + " WHERE " + condition + appendAuth(request), modelClazz))
+    Some(JDBCStorable.db.getObject("SELECT * FROM " + tableName + " WHERE " + condition + appendAuth(request), modelClazz))
   }
 
   override def findAll(request: Q): Option[List[M]] = {
@@ -25,7 +42,7 @@ trait JDBCService[M <: AnyRef, Q <: AnyRef] extends StorageService[M, Q] {
   }
 
   override def findByCondition(condition: String, request: Q): Option[List[M]] = {
-    Some(JDBCService.db.findObjects("SELECT * FROM " + tableName + " WHERE " + condition + appendAuth(request), modelClazz).toList)
+    Some(JDBCStorable.db.findObjects("SELECT * FROM " + tableName + " WHERE " + condition + appendAuth(request), modelClazz).toList)
   }
 
   override def pageAll(pageNumber: Long, pageSize: Long, request: Q): Option[PageModel[M]] = {
@@ -33,31 +50,31 @@ trait JDBCService[M <: AnyRef, Q <: AnyRef] extends StorageService[M, Q] {
   }
 
   override def pageByCondition(condition: String, pageNumber: Long, pageSize: Long, request: Q): Option[PageModel[M]] = {
-    val page = JDBCService.db.findObjects("SELECT * FROM " + tableName + " WHERE " + condition + appendAuth(request), pageNumber, pageSize, modelClazz)
+    val page = JDBCStorable.db.findObjects("SELECT * FROM " + tableName + " WHERE " + condition + appendAuth(request), pageNumber, pageSize, modelClazz)
     Some(PageModel(page.pageNumber, page.pageSize, page.pageTotal, page.recordTotal, page.objects.toList))
   }
 
   override def save(model: M, request: Q): Option[String] = {
-    JDBCService.db.open()
+    JDBCStorable.db.open()
     saveWithoutTransaction(model, request)
-    JDBCService.db.commit()
+    JDBCStorable.db.commit()
     Some(getIdValue(model))
   }
 
   override def saveWithoutTransaction(model: M, request: Q): Option[String] = {
-    JDBCService.db.save(tableName, BeanHelper.getValues(model).asInstanceOf[Map[String, AnyRef]])
+    JDBCStorable.db.save(tableName, getMapValue(model).asInstanceOf[Map[String, AnyRef]])
     Some(getIdValue(model))
   }
 
   override def update(id: String, model: M, request: Q): Option[String] = {
-    JDBCService.db.open()
+    JDBCStorable.db.open()
     updateWithoutTransaction(id, model, request)
-    JDBCService.db.commit()
+    JDBCStorable.db.commit()
     Some(getIdValue(model))
   }
 
   override def updateWithoutTransaction(id: String, model: M, request: Q): Option[String] = {
-    JDBCService.db.update(tableName, id, BeanHelper.getValues(model).asInstanceOf[Map[String, AnyRef]])
+    JDBCStorable.db.update(tableName, id, getMapValue(model).asInstanceOf[Map[String, AnyRef]])
     Some(getIdValue(model))
   }
 
@@ -80,21 +97,21 @@ trait JDBCService[M <: AnyRef, Q <: AnyRef] extends StorageService[M, Q] {
   }
 
   override def deleteByCondition(condition: String, request: Q): Option[List[String]] = {
-    JDBCService.db.open()
+    JDBCStorable.db.open()
     deleteByConditionWithoutTransaction(condition, request)
-    JDBCService.db.commit()
+    JDBCStorable.db.commit()
     Some(List())
   }
 
   override def deleteByConditionWithoutTransaction(condition: String, request: Q): Option[List[String]] = {
-    JDBCService.db.update("DELETE FROM " + tableName + " WHERE " + condition + appendAuth(request))
+    JDBCStorable.db.update("DELETE FROM " + tableName + " WHERE " + condition + appendAuth(request))
     Some(List())
   }
 
   override protected def appendAuth(request: Q): String = ""
 }
 
-object JDBCService extends LazyLogging {
+object JDBCStorable extends LazyLogging {
 
   var db: DB = _
 

@@ -10,7 +10,7 @@ class FunSpec extends FunSuite {
     testPath = testPath.substring(1)
   }
 
-  JDBCService.init(testPath)
+  JDBCStorable.init(testPath)
 
   test("功能测试") {
     val res = Resource()
@@ -38,6 +38,6 @@ class FunSpec extends FunSuite {
   }
 }
 
-object ResourceService extends JDBCService[Resource, Void]
+object ResourceService extends JDBCStorable[Resource, Void]
 
 

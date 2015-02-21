@@ -1,10 +1,15 @@
 package com.ecfront.storage
 
-import com.ecfront.common.JsonHelper
+import com.ecfront.common.{Ignore, JsonHelper}
 
 import scala.annotation.StaticAnnotation
 import scala.beans.BeanProperty
 import scala.collection.mutable.ArrayBuffer
+
+object Model{
+  val ID_FLAG="id"
+  val REL_FLAG="rel"
+}
 
 case class PageModel[M](
                          @BeanProperty var pageNumber: Long,
@@ -37,4 +42,6 @@ object PageModel {
 }
 
 case class Entity(idField: String) extends StaticAnnotation
+@scala.annotation.meta.field
+case class ManyToMany(mapping:String,master:Boolean,fetch:Boolean) extends Ignore
 
