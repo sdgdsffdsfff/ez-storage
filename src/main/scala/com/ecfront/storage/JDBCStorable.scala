@@ -8,13 +8,13 @@ import scala.collection.mutable.ArrayBuffer
 
 trait JDBCStorable[M <: AnyRef, Q <: AnyRef] extends Storable[M, Q] {
 
-  override protected def init(modelClazz: Class[M]): Unit = {
-    JDBCStorable.db.createTableIfNotExist(modelClazz.getSimpleName, persistentFields, idField)
+  override protected def _init(modelClazz: Class[M]): Unit = {
+    JDBCStorable.db.createTableIfNotExist(modelClazz.getSimpleName, persistentFields, _idField)
     initManyToManyRel(modelClazz)
   }
 
   private def initManyToManyRel(clazz: Class[M]): Unit = {
-    allAnnotations.filter(ann => ann.annotation.isInstanceOf[ManyToMany]).foreach {
+    _allAnnotations.filter(ann => ann.annotation.isInstanceOf[ManyToMany]).foreach {
       ann =>
         val annotation = ann.annotation.asInstanceOf[ManyToMany]
         val (masterFieldName, relFieldName) = getRelTableFields(annotation)
@@ -28,12 +28,12 @@ trait JDBCStorable[M <: AnyRef, Q <: AnyRef] extends Storable[M, Q] {
     }
   }
 
-  override def getById(id: String, request: Q): Option[M] = {
-    getByCondition(s"$idField = '$id'", request)
+  override def _getById(id: String, request: Q): Option[M] = {
+    _getByCondition(s"${_idField} = '$id'", request)
   }
 
-  override def getByCondition(condition: String, request: Q): Option[M] = {
-    val model = Some(JDBCStorable.db.getObject("SELECT * FROM " + tableName + " WHERE " + condition + appendAuth(request), modelClazz))
+  override def _getByCondition(condition: String, request: Q): Option[M] = {
+    val model = Some(JDBCStorable.db.getObject("SELECT * FROM " + _tableName + " WHERE " + condition + _appendAuth(request), _modelClazz))
     if (model != null) {
       getManyToManyRel(model.get, request)
     }
@@ -46,39 +46,39 @@ trait JDBCStorable[M <: AnyRef, Q <: AnyRef] extends Storable[M, Q] {
         val relTableName = getRelTableName(ann._1)
         val (masterFieldName, relFieldName) = getRelTableFields(ann._1)
         val value: List[String] = JDBCStorable.db.find(
-          s"SELECT $relFieldName FROM $relTableName WHERE $masterFieldName='${getIdValue(model)}'"
+          s"SELECT $relFieldName FROM $relTableName WHERE $masterFieldName='${_getIdValue(model)}'"
         ).map(_.get(relFieldName).asInstanceOf[String]).toList
-        setValueByField(model, ann._2, value)
+        _setValueByField(model, ann._2, value)
     }
   }
 
-  override def findAll(request: Q): Option[List[M]] = {
-    findByCondition("1=1", request)
+  override def _findAll(request: Q): Option[List[M]] = {
+    _findByCondition("1=1", request)
   }
 
-  override def findByCondition(condition: String, request: Q): Option[List[M]] = {
-    Some(JDBCStorable.db.findObjects("SELECT * FROM " + tableName + " WHERE " + condition + appendAuth(request), modelClazz).toList)
+  override def _findByCondition(condition: String, request: Q): Option[List[M]] = {
+    Some(JDBCStorable.db.findObjects("SELECT * FROM " + _tableName + " WHERE " + condition + _appendAuth(request), _modelClazz).toList)
   }
 
-  override def pageAll(pageNumber: Long, pageSize: Long, request: Q): Option[PageModel[M]] = {
-    pageByCondition("1=1", pageNumber, pageSize, request)
+  override def _pageAll(pageNumber: Long, pageSize: Long, request: Q): Option[PageModel[M]] = {
+    _pageByCondition("1=1", pageNumber, pageSize, request)
   }
 
-  override def pageByCondition(condition: String, pageNumber: Long, pageSize: Long, request: Q): Option[PageModel[M]] = {
-    val page = JDBCStorable.db.findObjects("SELECT * FROM " + tableName + " WHERE " + condition + appendAuth(request), pageNumber, pageSize, modelClazz)
+  override def _pageByCondition(condition: String, pageNumber: Long, pageSize: Long, request: Q): Option[PageModel[M]] = {
+    val page = JDBCStorable.db.findObjects("SELECT * FROM " + _tableName + " WHERE " + condition + _appendAuth(request), pageNumber, pageSize, _modelClazz)
     Some(PageModel(page.pageNumber, page.pageSize, page.pageTotal, page.recordTotal, page.objects.toList))
   }
 
-  override def save(model: M, request: Q): Option[String] = {
+  override def _save(model: M, request: Q): Option[String] = {
     JDBCStorable.db.open()
-    val id = saveWithoutTransaction(model, request)
+    val id = _saveWithoutTransaction(model, request)
     JDBCStorable.db.commit()
     id
   }
 
-  override def saveWithoutTransaction(model: M, request: Q): Option[String] = {
-    JDBCStorable.db.save(tableName, getMapValue(model).asInstanceOf[Map[String, AnyRef]])
-    val id = getIdValue(model)
+  override def _saveWithoutTransaction(model: M, request: Q): Option[String] = {
+    JDBCStorable.db.save(_tableName, _getMapValue(model).asInstanceOf[Map[String, AnyRef]])
+    val id = _getIdValue(model)
     saveManyToManyRel(id, model, request)
     Some(id)
   }
@@ -87,7 +87,7 @@ trait JDBCStorable[M <: AnyRef, Q <: AnyRef] extends Storable[M, Q] {
     manyToManyFields.foreach {
       ann =>
         val params = ArrayBuffer[Array[AnyRef]]()
-        val value = getValueByField(model, ann._2)
+        val value = _getValueByField(model, ann._2)
         if (value != null) {
           value.asInstanceOf[Iterable[Any]].foreach {
             value =>
@@ -99,15 +99,15 @@ trait JDBCStorable[M <: AnyRef, Q <: AnyRef] extends Storable[M, Q] {
     }
   }
 
-  override def update(id: String, model: M, request: Q): Option[String] = {
+  override def _update(id: String, model: M, request: Q): Option[String] = {
     JDBCStorable.db.open()
-    updateWithoutTransaction(id, model, request)
+    _updateWithoutTransaction(id, model, request)
     JDBCStorable.db.commit()
     Some(id)
   }
 
-  override def updateWithoutTransaction(id: String, model: M, request: Q): Option[String] = {
-    JDBCStorable.db.update(tableName, id, getMapValue(model).asInstanceOf[Map[String, AnyRef]])
+  override def _updateWithoutTransaction(id: String, model: M, request: Q): Option[String] = {
+    JDBCStorable.db.update(_tableName, id, _getMapValue(model).asInstanceOf[Map[String, AnyRef]])
     updateManyToManyRel(id, model, request)
     Some(id)
   }
@@ -119,7 +119,7 @@ trait JDBCStorable[M <: AnyRef, Q <: AnyRef] extends Storable[M, Q] {
         val relTableName = getRelTableName(ann._1)
         val (masterFieldName, relFieldName) = getRelTableFields(ann._1)
         JDBCStorable.db.update(s"DELETE FROM $relTableName WHERE $masterFieldName = ? ", Array(mainId))
-        val value = getValueByField(model, ann._2)
+        val value = _getValueByField(model, ann._2)
         if (value != null) {
           value.asInstanceOf[Iterable[Any]].foreach {
             value =>
@@ -130,34 +130,34 @@ trait JDBCStorable[M <: AnyRef, Q <: AnyRef] extends Storable[M, Q] {
     }
   }
 
-  override def deleteById(id: String, request: Q): Option[String] = {
-    deleteByCondition(s"$idField = '$id'", request)
+  override def _deleteById(id: String, request: Q): Option[String] = {
+    _deleteByCondition(s"${_idField} = '$id'", request)
     Some(id)
   }
 
-  override def deleteByIdWithoutTransaction(id: String, request: Q): Option[String] = {
-    deleteByConditionWithoutTransaction(s"$idField = '$id'", request)
+  override def _deleteByIdWithoutTransaction(id: String, request: Q): Option[String] = {
+    _deleteByConditionWithoutTransaction(s"${_idField} = '$id'", request)
     Some(id)
   }
 
-  override def deleteAll(request: Q): Option[List[String]] = {
-    deleteByCondition("1=1", request)
+  override def _deleteAll(request: Q): Option[List[String]] = {
+    _deleteByCondition("1=1", request)
   }
 
-  override def deleteAllWithoutTransaction(request: Q): Option[List[String]] = {
-    deleteByConditionWithoutTransaction("1=1", request)
+  override def _deleteAllWithoutTransaction(request: Q): Option[List[String]] = {
+    _deleteByConditionWithoutTransaction("1=1", request)
   }
 
-  override def deleteByCondition(condition: String, request: Q): Option[List[String]] = {
+  override def _deleteByCondition(condition: String, request: Q): Option[List[String]] = {
     JDBCStorable.db.open()
-    val res = deleteByConditionWithoutTransaction(condition, request)
+    val res = _deleteByConditionWithoutTransaction(condition, request)
     JDBCStorable.db.commit()
     res
   }
 
-  override def deleteByConditionWithoutTransaction(condition: String, request: Q): Option[List[String]] = {
+  override def _deleteByConditionWithoutTransaction(condition: String, request: Q): Option[List[String]] = {
     deleteManyToManyRel(condition, request)
-    JDBCStorable.db.update("DELETE FROM " + tableName + " WHERE " + condition + appendAuth(request))
+    JDBCStorable.db.update("DELETE FROM " + _tableName + " WHERE " + condition + _appendAuth(request))
     Some(List())
   }
 
@@ -169,8 +169,8 @@ trait JDBCStorable[M <: AnyRef, Q <: AnyRef] extends Storable[M, Q] {
           "DELETE FROM " + relTableName
         } else {
           s"DELETE FROM $relTableName WHERE" +
-            s" ${tableName + "_" + Model.ID_FLAG} in" +
-            s" (SELECT $idField FROM $tableName WHERE $condition ${appendAuth(request)})"
+            s" ${_tableName + "_" + Model.ID_FLAG} in" +
+            s" (SELECT ${_idField} FROM ${_tableName} WHERE $condition ${_appendAuth(request)})"
         }
         JDBCStorable.db.update(sql)
     }
@@ -183,22 +183,22 @@ trait JDBCStorable[M <: AnyRef, Q <: AnyRef] extends Storable[M, Q] {
   private def getRelTableName(annotation: ManyToMany): String = {
     val mappingTableName = getMappingTableName(annotation)
     if (annotation.master) {
-      Model.REL_FLAG + "_" + tableName + "_" + mappingTableName
+      Model.REL_FLAG + "_" + _tableName + "_" + mappingTableName
     } else {
-      Model.REL_FLAG + "_" + mappingTableName + "_" + tableName
+      Model.REL_FLAG + "_" + mappingTableName + "_" + _tableName
     }
   }
 
   private def getRelTableFields(annotation: ManyToMany): (String, String) = {
     val mappingTableName = getMappingTableName(annotation)
     if (annotation.master) {
-      (tableName + "_" + Model.ID_FLAG, mappingTableName + "_" + Model.ID_FLAG)
+      (_tableName + "_" + Model.ID_FLAG, mappingTableName + "_" + Model.ID_FLAG)
     } else {
-      (mappingTableName + "_" + Model.ID_FLAG, tableName + "_" + Model.ID_FLAG)
+      (mappingTableName + "_" + Model.ID_FLAG, _tableName + "_" + Model.ID_FLAG)
     }
   }
 
-  override protected def appendAuth(request: Q): String = ""
+  override protected def _appendAuth(request: Q): String = ""
 }
 
 object JDBCStorable extends LazyLogging {
