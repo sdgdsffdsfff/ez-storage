@@ -12,7 +12,7 @@ class FunSpec extends FunSuite {
 
   JDBCStorable.init(testPath)
 
-  test("功能测试") {
+  test("基础功能测试") {
     val res = Resource()
     res.id = "res1"
     res.name = "资源1"
@@ -36,7 +36,62 @@ class FunSpec extends FunSuite {
     ResourceService.deleteById("res1", null)
     assert(ResourceService.findAll(null).get.size == 3)
   }
+
+  test("ManyToMany测试") {
+    val res = Resource()
+    res.id = "res1"
+    res.name = "资源1"
+    ResourceService.save(res, null)
+    res.id = "res2"
+    res.name = "资源2"
+    ResourceService.save(res, null)
+
+    val account = Account()
+    account.id = "user1"
+
+    var role = Role()
+    role.id = "role1"
+    role.name = "admin"
+    RoleService.save(role, null)
+
+    role = RoleService.getById("role1", null).get
+    assert(role.id == "role1")
+    assert(role.resourceIds.size == 0)
+
+    //====================update&get======================
+    role.resourceIds = List("res1")
+    RoleService.update("role1", role, null)
+    assert(RoleService.getById("role1", null).get.resourceIds(0) == "res1")
+    role.resourceIds = List("res1", "res2")
+    RoleService.update("role1", role, null)
+    assert(RoleService.getById("role1", null).get.resourceIds(1) == "res2")
+    role.resourceIds = List("res1")
+    RoleService.update("role1", role, null)
+    assert(RoleService.getById("role1", null).get.resourceIds.size == 1)
+    role.resourceIds = null
+    RoleService.update("role1", role, null)
+    assert(RoleService.getById("role1", null).get.resourceIds.size == 0)
+    //====================save&get======================
+    role.id = "role2"
+    role.name = "user"
+    role.resourceIds = List("res1", "res2")
+    RoleService.save(role, null)
+    assert(RoleService.getById("role2", null).get.resourceIds(1) == "res2")
+    //====================delete&get======================
+    RoleService.deleteById("res1", null)
+    assert(RoleService.getById("role2", null).get.resourceIds.size == 2)
+    account.roleIds = List("role1")
+    AccountService.save(account, null)
+    assert(AccountService.getById("user1", null).get.roleIds.size == 1)
+    RoleService.deleteById("role1", null)
+    assert(AccountService.getById("user1", null).get.roleIds.size == 0)
+  }
+
 }
+
+object RoleService extends JDBCStorable[Role, Void]
+
+object AccountService extends JDBCStorable[Account, Void]
 
 object ResourceService extends JDBCStorable[Resource, Void]
 

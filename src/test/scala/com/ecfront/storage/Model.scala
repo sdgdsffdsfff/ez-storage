@@ -6,8 +6,10 @@ import scala.beans.BeanProperty
 case class Role() extends IdModel {
   @BeanProperty var code: String = _
   @BeanProperty var name: String = _
-  @ManyToMany(mapping = "Resource", master = true, fetch = false)
-  @BeanProperty var resourceIds: List[String] = _
+  @ManyToMany(mapping = "Resource", master = true, fetch = true)
+  @BeanProperty var resourceIds: List[String] = List()
+  @ManyToMany(mapping = "Account", master = false, fetch = false)
+  @BeanProperty var accountIds: List[String] = List()
 }
 
 @Entity(idField = "id")
@@ -17,10 +19,8 @@ case class Resource() extends IdModel {
 
 @Entity(idField = "id")
 case class Account() extends IdModel {
-  @BeanProperty var userId: String = _
-  @BeanProperty var password: String = _
-  @ManyToMany(mapping = "Role", master = false, fetch = true)
-  @BeanProperty var roleIds: List[String] = _
+  @ManyToMany(mapping = "Role", master = true, fetch = true)
+  @BeanProperty var roleIds: List[String] = List()
 }
 
 abstract class IdModel {

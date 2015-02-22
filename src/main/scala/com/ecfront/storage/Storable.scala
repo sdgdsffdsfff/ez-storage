@@ -16,14 +16,19 @@ trait Storable[M <: AnyRef, Q <: AnyRef] extends LazyLogging {
   protected val idField = classAnnotation.idField
   protected val allAnnotations = BeanHelper.findFieldAnnotations(modelClazz)
   protected val allFields = BeanHelper.findFields(modelClazz)
-  protected val ignoreFields =allFields.filter{
+  protected val ignoreFields = allFields.filter {
     field =>
       allAnnotations.filter(_.fieldName == field._1).exists {
         ann =>
-          ann.toString == classOf[Ignore].getName || ann.toString == classOf[ManyToMany].getName
+          ann.annotation.getClass == classOf[Ignore] || ann.annotation.getClass == classOf[ManyToMany]
       }
   }.map(_._1).toList
-  protected val persistentFields=allFields.filter(field => !ignoreFields.contains(field._1))
+  protected val persistentFields = allFields.filter(field => !ignoreFields.contains(field._1))
+  protected val manyToManyFields = allAnnotations.filter(_.annotation.isInstanceOf[ManyToMany]).map {
+    field =>
+      (field.annotation.asInstanceOf[ManyToMany], field.fieldName)
+  }
+
 
   logger.info( """Create Storage Service: model: %s""".format(modelClazz.getSimpleName))
 
@@ -31,8 +36,8 @@ trait Storable[M <: AnyRef, Q <: AnyRef] extends LazyLogging {
 
   init(modelClazz)
 
-  protected def getMapValue(model:M):Map[String, Any] ={
-    BeanHelper.findValues(model,ignoreFields)
+  protected def getMapValue(model: M): Map[String, Any] = {
+    BeanHelper.findValues(model, ignoreFields)
   }
 
   def getById(id: String, request: Q): Option[M]
@@ -70,7 +75,15 @@ trait Storable[M <: AnyRef, Q <: AnyRef] extends LazyLogging {
   protected def appendAuth(request: Q): String
 
   protected def getIdValue(model: AnyRef): String = {
-    BeanHelper.getValue(model, idField).orNull.asInstanceOf[String]
+    getValueByField(model, idField).asInstanceOf[String]
+  }
+
+  protected def getValueByField(model: AnyRef, fieldName: String): Any = {
+    BeanHelper.getValue(model, fieldName).orNull
+  }
+
+  protected def setValueByField(model: AnyRef, fieldName: String, value: Any): Any = {
+    BeanHelper.setValue(model, fieldName, value)
   }
 
 }
