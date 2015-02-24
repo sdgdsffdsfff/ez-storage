@@ -1,4 +1,4 @@
-EZ Storage(building)
+EZ Storage
 ===
 ### 数据存储模块
 
@@ -6,19 +6,16 @@ EZ Storage(building)
 
 ##功能
 
-
+1. 实现JDBC的各类CURD操作
+1. 实现对象关联
 
 ##使用
 
     <dependency>
         <groupId>com.ecfront</groupId>
-        <artifactId>storage</artifactId>
-        <version>0.1</version>
+        <artifactId>ez-storage</artifactId>
+        <version>0.2.1</version>
     </dependency>
-
-
-=======================================================
-
 
 ### Check out sources
 `git clone https://github.com/gudaoxuri/ez-storage.git`
