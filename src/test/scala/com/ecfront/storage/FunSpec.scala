@@ -16,35 +16,35 @@ class FunSpec extends FunSuite {
     val res = Resource()
     res.id = "res1"
     res.name = "资源1"
-    ResourceService._save(res, null)
-    assert(ResourceService._getById("res1", null).get.getName == "资源1")
+    ResourceService._save(res)
+    assert(ResourceService._getById("res1").get.getName == "资源1")
     res.name = "资源new"
-    ResourceService._update("res1", res, null)
-    assert(ResourceService._getById("res1", null).get.getName == "资源new")
+    ResourceService._update("res1", res)
+    assert(ResourceService._getById("res1").get.getName == "资源new")
     res.id = "res2"
     res.name = "资源2"
-    ResourceService._save(res, null)
+    ResourceService._save(res)
     res.id = "res3"
     res.name = "资源3"
-    ResourceService._save(res, null)
+    ResourceService._save(res)
     res.id = "res4"
     res.name = "resource4"
-    ResourceService._save(res, null)
-    assert(ResourceService._findAll(null).get.size == 4)
+    ResourceService._save(res)
+    assert(ResourceService._findAll().get.size == 4)
     val page = ResourceService._pageByCondition("name like '资源%'", 1, 2, null).get
     assert(page.pageTotal == 2 && page.pageSize == 2 && page.recordTotal == 3 && page.results.size == 2)
-    ResourceService._deleteById("res1", null)
-    assert(ResourceService._findAll(null).get.size == 3)
+    ResourceService._deleteById("res1")
+    assert(ResourceService._findAll().get.size == 3)
   }
 
   test("ManyToMany测试") {
     val res = Resource()
     res.id = "res1"
     res.name = "资源1"
-    ResourceService._save(res, null)
+    ResourceService._save(res)
     res.id = "res2"
     res.name = "资源2"
-    ResourceService._save(res, null)
+    ResourceService._save(res)
 
     val account = Account()
     account.id = "user1"
@@ -93,6 +93,6 @@ object RoleService extends JDBCStorable[Role, Void]
 
 object AccountService extends JDBCStorable[Account, Void]
 
-object ResourceService extends JDBCStorable[Resource, Void]
+object ResourceService extends SimpleJDBCStorable[Resource]
 
 

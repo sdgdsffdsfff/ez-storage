@@ -5,6 +5,11 @@ import java.lang.reflect.ParameterizedType
 import com.ecfront.common.{BeanHelper, Ignore}
 import com.typesafe.scalalogging.slf4j.LazyLogging
 
+/**
+ * 存储接口
+ * @tparam M 要操作的实体对象
+ * @tparam Q 请求附加对象，如可在此对象中加入请求的用户名、角色，重写_appendAuth方法实现权限控制
+ */
 trait Storable[M <: AnyRef, Q <: AnyRef] extends LazyLogging {
 
   protected val _modelClazz = this.getClass.getGenericInterfaces()(0).asInstanceOf[ParameterizedType].getActualTypeArguments()(0).asInstanceOf[Class[M]]
@@ -15,7 +20,7 @@ trait Storable[M <: AnyRef, Q <: AnyRef] extends LazyLogging {
   }
   protected val _idField = _classAnnotation.idField
   protected val _allAnnotations = BeanHelper.findFieldAnnotations(_modelClazz)
-  protected val _allFields = BeanHelper.findFields(_modelClazz,filterAnnotations=Seq())
+  protected val _allFields = BeanHelper.findFields(_modelClazz, filterAnnotations = Seq())
   protected val _ignoreFields = _allFields.filter {
     field =>
       _allAnnotations.filter(_.fieldName == field._1).exists {
