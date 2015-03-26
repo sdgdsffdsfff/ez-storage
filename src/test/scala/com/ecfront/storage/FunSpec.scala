@@ -61,7 +61,7 @@ class FunSpec extends FunSuite {
     //====================update&get======================
     role.resourceIds = List("res1")
     RoleService._update("role1", role, null)
-    assert(RoleService._getById("role1", null).get.resourceIds(0) == "res1")
+    assert(RoleService._getById("role1", null).get.resourceIds.head == "res1")
     role.resourceIds = List("res1", "res2")
     RoleService._update("role1", role, null)
     assert(RoleService._getById("role1", null).get.resourceIds(1) == "res2")
@@ -85,6 +85,26 @@ class FunSpec extends FunSuite {
     assert(AccountService._getById("user1", null).get.roleIds.size == 1)
     RoleService._deleteById("role1", null)
     assert(AccountService._getById("user1", null).get.roleIds.size == 0)
+  }
+
+  test("save & update 测试") {
+    //auto id test
+    val role = Role()
+    role.name = "管理员"
+    role.code = "admin"
+    role.resourceIds = List("res1", "res2")
+    val nRole = RoleService._getById(RoleService._save(role, null).get, null).get
+    assert(nRole.code == "admin")
+    assert(nRole.name == "管理员")
+    assert(nRole.resourceIds.size == 2)
+    //update without null value test
+    nRole.code = "root"
+    nRole.name = null
+    nRole.resourceIds = null
+    val nnRole = RoleService._getById(RoleService._update(nRole.id, nRole, null).get, null).get
+    assert(nnRole.code == "root")
+    assert(nnRole.name == "管理员")
+    assert(nnRole.resourceIds.size == 2)
   }
 
 }

@@ -1,6 +1,7 @@
 package com.ecfront.storage
 
 import java.lang.reflect.ParameterizedType
+import java.util.UUID
 
 import com.ecfront.common.{BeanHelper, Ignore}
 import com.typesafe.scalalogging.slf4j.LazyLogging
@@ -45,49 +46,120 @@ trait Storable[M <: AnyRef, Q <: AnyRef] extends LazyLogging {
     BeanHelper.findValues(model, _ignoreFields)
   }
 
-  def _getById(id: String, request: Q): Option[M]
+  def _getById(id: String, request: Q): Option[M] = {
+    doGetById(id, request)
+  }
 
-  def _getByCondition(condition: String, request: Q): Option[M]
+  protected def doGetById(id: String, request: Q): Option[M]
 
-  def _findAll(request: Q): Option[List[M]]
+  def _getByCondition(condition: String, request: Q): Option[M] = {
+    doGetByCondition(condition, request)
+  }
 
-  def _findByCondition(condition: String, request: Q): Option[List[M]]
+  protected def doGetByCondition(condition: String, request: Q): Option[M]
 
-  def _pageAll(pageNumber: Long, pageSize: Long, request: Q): Option[PageModel[M]]
+  def _findAll(request: Q): Option[List[M]] = {
+    doFindAll(request)
+  }
 
-  def _pageByCondition(condition: String, pageNumber: Long, pageSize: Long, request: Q): Option[PageModel[M]]
+  protected def doFindAll(request: Q): Option[List[M]]
 
-  def _save(model: M, request: Q): Option[String]
+  def _findByCondition(condition: String, request: Q): Option[List[M]] = {
+    doFindByCondition(condition, request)
+  }
 
-  def _saveWithoutTransaction(model: M, request: Q): Option[String]
+  protected def doFindByCondition(condition: String, request: Q): Option[List[M]]
 
-  def _update(id: String, model: M, request: Q): Option[String]
+  def _pageAll(pageNumber: Long, pageSize: Long, request: Q): Option[PageModel[M]] = {
+    doPageAll(pageNumber, pageSize, request)
+  }
 
-  def _updateWithoutTransaction(id: String, model: M, request: Q): Option[String]
+  protected def doPageAll(pageNumber: Long, pageSize: Long, request: Q): Option[PageModel[M]]
 
-  def _deleteById(id: String, request: Q): Option[String]
+  def _pageByCondition(condition: String, pageNumber: Long, pageSize: Long, request: Q): Option[PageModel[M]] = {
+    doPageByCondition(condition, pageNumber, pageSize, request)
+  }
 
-  def _deleteByIdWithoutTransaction(id: String, request: Q): Option[String]
+  protected def doPageByCondition(condition: String, pageNumber: Long, pageSize: Long, request: Q): Option[PageModel[M]]
 
-  def _deleteByCondition(condition: String, request: Q): Option[List[String]]
+  def _save(model: M, request: Q): Option[String] = {
+    doSave(model, request)
+  }
 
-  def _deleteAllWithoutTransaction(request: Q): Option[List[String]]
+  protected def doSave(model: M, request: Q): Option[String]
 
-  def _deleteAll(request: Q): Option[List[String]]
+  def _saveWithoutTransaction(model: M, request: Q): Option[String] = {
+    val idValue = _getIdValue(model)
+    if (idValue == null || idValue.isEmpty) {
+      _setValueByField(model, _idField, UUID.randomUUID().toString)
+    }
+    doSaveWithoutTransaction(model, request)
+  }
 
-  def _deleteByConditionWithoutTransaction(condition: String, request: Q): Option[List[String]]
+  protected def doSaveWithoutTransaction(model: M, request: Q): Option[String]
+
+  def _update(id: String, model: M, request: Q): Option[String] = {
+    doUpdate(id, model, request)
+  }
+
+  protected def doUpdate(id: String, model: M, request: Q): Option[String]
+
+  def _updateWithoutTransaction(id: String, model: M, request: Q): Option[String] = {
+    val savedModel = doGetById(id, request).get
+    BeanHelper.copyProperties(savedModel, model)
+    doUpdateWithoutTransaction(id, savedModel, request)
+  }
+
+  protected def doUpdateWithoutTransaction(id: String, model: M, request: Q): Option[String]
+
+  def _deleteById(id: String, request: Q): Option[String] = {
+    doDeleteById(id, request)
+  }
+
+  protected def doDeleteById(id: String, request: Q): Option[String]
+
+  def _deleteByIdWithoutTransaction(id: String, request: Q): Option[String] = {
+    doDeleteByIdWithoutTransaction(id, request)
+  }
+
+  protected def doDeleteByIdWithoutTransaction(id: String, request: Q): Option[String]
+
+  def _deleteByCondition(condition: String, request: Q): Option[List[String]] = {
+    doDeleteByCondition(condition, request)
+  }
+
+  protected def doDeleteByCondition(condition: String, request: Q): Option[List[String]]
+
+  def _deleteAllWithoutTransaction(request: Q): Option[List[String]] = {
+    doDeleteAllWithoutTransaction(request)
+  }
+
+  protected def doDeleteAllWithoutTransaction(request: Q): Option[List[String]]
+
+  def _deleteAll(request: Q): Option[List[String]] = {
+    doDeleteAll(request)
+  }
+
+  protected def doDeleteAll(request: Q): Option[List[String]]
+
+  def _deleteByConditionWithoutTransaction(condition: String, request: Q): Option[List[String]] = {
+    doDeleteByConditionWithoutTransaction(condition, request)
+  }
+
+  protected def doDeleteByConditionWithoutTransaction(condition: String, request: Q): Option[List[String]]
 
   protected def _appendAuth(request: Q): String
 
   protected def _getIdValue(model: AnyRef): String = {
-    _getValueByField(model, _idField).asInstanceOf[String]
+    val idValue = _getValueByField(model, _idField)
+    if (idValue == null) null else idValue.asInstanceOf[String].trim
   }
 
   protected def _getValueByField(model: AnyRef, fieldName: String): Any = {
     BeanHelper.getValue(model, fieldName).orNull
   }
 
-  protected def _setValueByField(model: AnyRef, fieldName: String, value: Any): Any = {
+  protected def _setValueByField(model: AnyRef, fieldName: String, value: Any): Unit = {
     BeanHelper.setValue(model, fieldName, value)
   }
 

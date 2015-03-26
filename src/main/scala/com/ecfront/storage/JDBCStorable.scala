@@ -28,11 +28,11 @@ trait JDBCStorable[M <: AnyRef, Q <: AnyRef] extends Storable[M, Q] {
     }
   }
 
-  override def _getById(id: String, request: Q): Option[M] = {
+  override protected def doGetById(id: String, request: Q): Option[M] = {
     _getByCondition(s"${_idField} = '$id'", request)
   }
 
-  override def _getByCondition(condition: String, request: Q): Option[M] = {
+  override protected def doGetByCondition(condition: String, request: Q): Option[M] = {
     val model = Some(JDBCStorable.db.getObject("SELECT * FROM " + _tableName + " WHERE " + condition + _appendAuth(request), _modelClazz))
     if (model != null) {
       getManyToManyRel(model.get, request)
@@ -52,31 +52,31 @@ trait JDBCStorable[M <: AnyRef, Q <: AnyRef] extends Storable[M, Q] {
     }
   }
 
-  override def _findAll(request: Q): Option[List[M]] = {
+  override protected def doFindAll(request: Q): Option[List[M]] = {
     _findByCondition("1=1", request)
   }
 
-  override def _findByCondition(condition: String, request: Q): Option[List[M]] = {
+  override protected def doFindByCondition(condition: String, request: Q): Option[List[M]] = {
     Some(JDBCStorable.db.findObjects("SELECT * FROM " + _tableName + " WHERE " + condition + _appendAuth(request), _modelClazz).toList)
   }
 
-  override def _pageAll(pageNumber: Long, pageSize: Long, request: Q): Option[PageModel[M]] = {
+  override protected def doPageAll(pageNumber: Long, pageSize: Long, request: Q): Option[PageModel[M]] = {
     _pageByCondition("1=1", pageNumber, pageSize, request)
   }
 
-  override def _pageByCondition(condition: String, pageNumber: Long, pageSize: Long, request: Q): Option[PageModel[M]] = {
+  override protected def doPageByCondition(condition: String, pageNumber: Long, pageSize: Long, request: Q): Option[PageModel[M]] = {
     val page = JDBCStorable.db.findObjects("SELECT * FROM " + _tableName + " WHERE " + condition + _appendAuth(request), pageNumber, pageSize, _modelClazz)
     Some(PageModel(page.pageNumber, page.pageSize, page.pageTotal, page.recordTotal, page.objects.toList))
   }
 
-  override def _save(model: M, request: Q): Option[String] = {
+  override protected def doSave(model: M, request: Q): Option[String] = {
     JDBCStorable.db.open()
     val id = _saveWithoutTransaction(model, request)
     JDBCStorable.db.commit()
     id
   }
 
-  override def _saveWithoutTransaction(model: M, request: Q): Option[String] = {
+  override protected def doSaveWithoutTransaction(model: M, request: Q): Option[String] = {
     JDBCStorable.db.save(_tableName, _getMapValue(model).asInstanceOf[Map[String, AnyRef]])
     val id = _getIdValue(model)
     saveManyToManyRel(id, model, request)
@@ -99,14 +99,14 @@ trait JDBCStorable[M <: AnyRef, Q <: AnyRef] extends Storable[M, Q] {
     }
   }
 
-  override def _update(id: String, model: M, request: Q): Option[String] = {
+  override protected def doUpdate(id: String, model: M, request: Q): Option[String] = {
     JDBCStorable.db.open()
     _updateWithoutTransaction(id, model, request)
     JDBCStorable.db.commit()
     Some(id)
   }
 
-  override def _updateWithoutTransaction(id: String, model: M, request: Q): Option[String] = {
+  override protected def doUpdateWithoutTransaction(id: String, model: M, request: Q): Option[String] = {
     JDBCStorable.db.update(_tableName, id, _getMapValue(model).asInstanceOf[Map[String, AnyRef]])
     updateManyToManyRel(id, model, request)
     Some(id)
@@ -130,32 +130,32 @@ trait JDBCStorable[M <: AnyRef, Q <: AnyRef] extends Storable[M, Q] {
     }
   }
 
-  override def _deleteById(id: String, request: Q): Option[String] = {
+  override protected def doDeleteById(id: String, request: Q): Option[String] = {
     _deleteByCondition(s"${_idField} = '$id'", request)
     Some(id)
   }
 
-  override def _deleteByIdWithoutTransaction(id: String, request: Q): Option[String] = {
+  override protected def doDeleteByIdWithoutTransaction(id: String, request: Q): Option[String] = {
     _deleteByConditionWithoutTransaction(s"${_idField} = '$id'", request)
     Some(id)
   }
 
-  override def _deleteAll(request: Q): Option[List[String]] = {
+  override protected def doDeleteAll(request: Q): Option[List[String]] = {
     _deleteByCondition("1=1", request)
   }
 
-  override def _deleteAllWithoutTransaction(request: Q): Option[List[String]] = {
+  override protected def doDeleteAllWithoutTransaction(request: Q): Option[List[String]] = {
     _deleteByConditionWithoutTransaction("1=1", request)
   }
 
-  override def _deleteByCondition(condition: String, request: Q): Option[List[String]] = {
+  override protected def doDeleteByCondition(condition: String, request: Q): Option[List[String]] = {
     JDBCStorable.db.open()
     val res = _deleteByConditionWithoutTransaction(condition, request)
     JDBCStorable.db.commit()
     res
   }
 
-  override def _deleteByConditionWithoutTransaction(condition: String, request: Q): Option[List[String]] = {
+  override protected def doDeleteByConditionWithoutTransaction(condition: String, request: Q): Option[List[String]] = {
     deleteManyToManyRel(condition, request)
     JDBCStorable.db.update("DELETE FROM " + _tableName + " WHERE " + condition + _appendAuth(request))
     Some(List())

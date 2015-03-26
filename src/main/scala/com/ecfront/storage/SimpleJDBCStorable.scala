@@ -24,8 +24,6 @@ trait SimpleJDBCStorable[M <: AnyRef] extends JDBCStorable[M, Void] {
 
   override def _getById(id: String, request: Void=null): Option[M] = super._getById(id, request)
 
-  override protected def _init(modelClazz: Class[M]): Unit = super._init(modelClazz)
-
   override def _pageAll(pageNumber: Long, pageSize: Long, request: Void=null): Option[PageModel[M]] = super._pageAll(pageNumber, pageSize, request)
 
   override def _pageByCondition(condition: String, pageNumber: Long, pageSize: Long, request: Void): Option[PageModel[M]] = super._pageByCondition(condition, pageNumber, pageSize, request)
