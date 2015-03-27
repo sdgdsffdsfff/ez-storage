@@ -29,8 +29,8 @@ trait Storable[M <: AnyRef, Q <: AnyRef] extends LazyLogging {
           ann.annotation.getClass == classOf[Ignore] || ann.annotation.getClass == classOf[ManyToMany]
       }
   }.map(_._1).toList
-  protected val persistentFields = _allFields.filter(field => !_ignoreFields.contains(field._1))
-  protected val manyToManyFields = _allAnnotations.filter(_.annotation.isInstanceOf[ManyToMany]).map {
+  protected val _persistentFields = _allFields.filter(field => !_ignoreFields.contains(field._1))
+  protected val _manyToManyFields = _allAnnotations.filter(_.annotation.isInstanceOf[ManyToMany]).map {
     field =>
       (field.annotation.asInstanceOf[ManyToMany], field.fieldName)
   }
@@ -47,106 +47,106 @@ trait Storable[M <: AnyRef, Q <: AnyRef] extends LazyLogging {
   }
 
   def _getById(id: String, request: Q): Option[M] = {
-    doGetById(id, request)
+    _doGetById(id, request)
   }
 
-  protected def doGetById(id: String, request: Q): Option[M]
+  protected def _doGetById(id: String, request: Q): Option[M]
 
   def _getByCondition(condition: String, request: Q): Option[M] = {
-    doGetByCondition(condition, request)
+    _doGetByCondition(condition, request)
   }
 
-  protected def doGetByCondition(condition: String, request: Q): Option[M]
+  protected def _doGetByCondition(condition: String, request: Q): Option[M]
 
   def _findAll(request: Q): Option[List[M]] = {
-    doFindAll(request)
+    _doFindAll(request)
   }
 
-  protected def doFindAll(request: Q): Option[List[M]]
+  protected def _doFindAll(request: Q): Option[List[M]]
 
   def _findByCondition(condition: String, request: Q): Option[List[M]] = {
-    doFindByCondition(condition, request)
+    _doFindByCondition(condition, request)
   }
 
-  protected def doFindByCondition(condition: String, request: Q): Option[List[M]]
+  protected def _doFindByCondition(condition: String, request: Q): Option[List[M]]
 
   def _pageAll(pageNumber: Long, pageSize: Long, request: Q): Option[PageModel[M]] = {
-    doPageAll(pageNumber, pageSize, request)
+    _doPageAll(pageNumber, pageSize, request)
   }
 
-  protected def doPageAll(pageNumber: Long, pageSize: Long, request: Q): Option[PageModel[M]]
+  protected def _doPageAll(pageNumber: Long, pageSize: Long, request: Q): Option[PageModel[M]]
 
   def _pageByCondition(condition: String, pageNumber: Long, pageSize: Long, request: Q): Option[PageModel[M]] = {
-    doPageByCondition(condition, pageNumber, pageSize, request)
+    _doPageByCondition(condition, pageNumber, pageSize, request)
   }
 
-  protected def doPageByCondition(condition: String, pageNumber: Long, pageSize: Long, request: Q): Option[PageModel[M]]
+  protected def _doPageByCondition(condition: String, pageNumber: Long, pageSize: Long, request: Q): Option[PageModel[M]]
 
   def _save(model: M, request: Q): Option[String] = {
-    doSave(model, request)
+    _doSave(model, request)
   }
 
-  protected def doSave(model: M, request: Q): Option[String]
+  protected def _doSave(model: M, request: Q): Option[String]
 
   def _saveWithoutTransaction(model: M, request: Q): Option[String] = {
     val idValue = _getIdValue(model)
     if (idValue == null || idValue.isEmpty) {
       _setValueByField(model, _idField, UUID.randomUUID().toString)
     }
-    doSaveWithoutTransaction(model, request)
+    _doSaveWithoutTransaction(model, request)
   }
 
-  protected def doSaveWithoutTransaction(model: M, request: Q): Option[String]
+  protected def _doSaveWithoutTransaction(model: M, request: Q): Option[String]
 
   def _update(id: String, model: M, request: Q): Option[String] = {
-    doUpdate(id, model, request)
+    _doUpdate(id, model, request)
   }
 
-  protected def doUpdate(id: String, model: M, request: Q): Option[String]
+  protected def _doUpdate(id: String, model: M, request: Q): Option[String]
 
   def _updateWithoutTransaction(id: String, model: M, request: Q): Option[String] = {
-    val savedModel = doGetById(id, request).get
+    val savedModel = _doGetById(id, request).get
     BeanHelper.copyProperties(savedModel, model)
-    doUpdateWithoutTransaction(id, savedModel, request)
+    _doUpdateWithoutTransaction(id, savedModel, request)
   }
 
-  protected def doUpdateWithoutTransaction(id: String, model: M, request: Q): Option[String]
+  protected def _doUpdateWithoutTransaction(id: String, model: M, request: Q): Option[String]
 
   def _deleteById(id: String, request: Q): Option[String] = {
-    doDeleteById(id, request)
+    _doDeleteById(id, request)
   }
 
-  protected def doDeleteById(id: String, request: Q): Option[String]
+  protected def _doDeleteById(id: String, request: Q): Option[String]
 
   def _deleteByIdWithoutTransaction(id: String, request: Q): Option[String] = {
-    doDeleteByIdWithoutTransaction(id, request)
+    _doDeleteByIdWithoutTransaction(id, request)
   }
 
-  protected def doDeleteByIdWithoutTransaction(id: String, request: Q): Option[String]
+  protected def _doDeleteByIdWithoutTransaction(id: String, request: Q): Option[String]
 
   def _deleteByCondition(condition: String, request: Q): Option[List[String]] = {
-    doDeleteByCondition(condition, request)
+    _doDeleteByCondition(condition, request)
   }
 
-  protected def doDeleteByCondition(condition: String, request: Q): Option[List[String]]
+  protected def _doDeleteByCondition(condition: String, request: Q): Option[List[String]]
 
   def _deleteAllWithoutTransaction(request: Q): Option[List[String]] = {
-    doDeleteAllWithoutTransaction(request)
+    _doDeleteAllWithoutTransaction(request)
   }
 
-  protected def doDeleteAllWithoutTransaction(request: Q): Option[List[String]]
+  protected def _doDeleteAllWithoutTransaction(request: Q): Option[List[String]]
 
   def _deleteAll(request: Q): Option[List[String]] = {
-    doDeleteAll(request)
+    _doDeleteAll(request)
   }
 
-  protected def doDeleteAll(request: Q): Option[List[String]]
+  protected def _doDeleteAll(request: Q): Option[List[String]]
 
   def _deleteByConditionWithoutTransaction(condition: String, request: Q): Option[List[String]] = {
-    doDeleteByConditionWithoutTransaction(condition, request)
+    _doDeleteByConditionWithoutTransaction(condition, request)
   }
 
-  protected def doDeleteByConditionWithoutTransaction(condition: String, request: Q): Option[List[String]]
+  protected def _doDeleteByConditionWithoutTransaction(condition: String, request: Q): Option[List[String]]
 
   protected def _appendAuth(request: Q): String
 

@@ -14,7 +14,7 @@ EZ Storage
     <dependency>
         <groupId>com.ecfront</groupId>
         <artifactId>ez-storage</artifactId>
-        <version>0.2.3</version>
+        <version>0.2.4</version>
     </dependency>
 
 ### Check out sources
