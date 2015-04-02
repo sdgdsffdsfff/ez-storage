@@ -41,7 +41,15 @@ object PageModel {
   }
 }
 
-case class Entity(idField: String) extends StaticAnnotation
+case class Entity(idField: String,desc:String) extends StaticAnnotation
+@scala.annotation.meta.field
+case class Text() extends StaticAnnotation
+@scala.annotation.meta.field
+case class Desc(desc:String) extends StaticAnnotation
+@scala.annotation.meta.field
+case class Index() extends StaticAnnotation
+@scala.annotation.meta.field
+case class Unique() extends StaticAnnotation
 @scala.annotation.meta.field
 case class ManyToMany(mapping:String,master:Boolean,fetch:Boolean) extends Ignore
 

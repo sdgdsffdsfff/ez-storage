@@ -9,7 +9,9 @@ import scala.collection.mutable.ArrayBuffer
 trait JDBCStorable[M <: AnyRef, Q <: AnyRef] extends Storable[M, Q] {
 
   override protected def __init(modelClazz: Class[M]): Unit = {
-    JDBCStorable.db.createTableIfNotExist(modelClazz.getSimpleName, __persistentFields, __idField)
+    JDBCStorable.db.createTableIfNotExist(
+      modelClazz.getSimpleName, __tableDesc, __persistentFields, __fieldDesc, __indexFields, __uniqueFields, __idField
+    )
     __initManyToManyRel(modelClazz)
   }
 
@@ -19,12 +21,11 @@ trait JDBCStorable[M <: AnyRef, Q <: AnyRef] extends Storable[M, Q] {
         val annotation = ann.annotation.asInstanceOf[ManyToMany]
         val (masterFieldName, relFieldName) = __getRelTableFields(annotation)
         JDBCStorable.db.createTableIfNotExist(
-          __getRelTableName(annotation),
+          __getRelTableName(annotation), "",
           Map[String, String](
             masterFieldName -> "String",
             relFieldName -> "String"
-          ),
-          null)
+          ), null, null, null, null)
     }
   }
 

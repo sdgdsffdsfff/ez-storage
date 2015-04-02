@@ -20,7 +20,24 @@ trait Storable[M <: AnyRef, Q <: AnyRef] extends LazyLogging {
     null
   }
   protected val __idField = __classAnnotation.idField
+  protected val __tableDesc = __classAnnotation.desc
   protected val __allAnnotations = BeanHelper.findFieldAnnotations(__modelClazz)
+  protected val __manyToManyFields = __allAnnotations.filter(_.annotation.isInstanceOf[ManyToMany]).map {
+    field =>
+      (field.annotation.asInstanceOf[ManyToMany], field.fieldName)
+  }
+  protected val __fieldDesc = __allAnnotations.filter(_.annotation.isInstanceOf[Desc]).map {
+    field =>
+      field.fieldName -> field.annotation.asInstanceOf[Desc].desc
+  }.toMap
+  protected val __indexFields = __allAnnotations.filter(_.annotation.isInstanceOf[Index]).map {
+    field =>
+      field.fieldName
+  }.toList
+  protected val __uniqueFields = __allAnnotations.filter(_.annotation.isInstanceOf[Unique]).map {
+    field =>
+      field.fieldName
+  }.toList
   protected val __allFields = BeanHelper.findFields(__modelClazz, filterAnnotations = Seq())
   protected val __ignoreFields = __allFields.filter {
     field =>
@@ -30,10 +47,7 @@ trait Storable[M <: AnyRef, Q <: AnyRef] extends LazyLogging {
       }
   }.map(_._1).toList
   protected val __persistentFields = __allFields.filter(field => !__ignoreFields.contains(field._1))
-  protected val __manyToManyFields = __allAnnotations.filter(_.annotation.isInstanceOf[ManyToMany]).map {
-    field =>
-      (field.annotation.asInstanceOf[ManyToMany], field.fieldName)
-  }
+
 
 
   logger.info( """Create Storage Service: model: %s""".format(__modelClazz.getSimpleName))

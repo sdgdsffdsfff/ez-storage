@@ -68,7 +68,7 @@ class FunSpec extends FunSuite {
     role.resourceIds = List("res1")
     RoleService.__update("role1", role, null)
     assert(RoleService.__getById("role1", null).get.resourceIds.size == 1)
-    role.resourceIds = null
+    role.resourceIds = List()
     RoleService.__update("role1", role, null)
     assert(RoleService.__getById("role1", null).get.resourceIds.size == 0)
     //====================save&get======================
