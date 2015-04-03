@@ -38,7 +38,19 @@ trait Storable[M <: AnyRef, Q <: AnyRef] extends LazyLogging {
     field =>
       field.fieldName
   }.toList
-  protected val __allFields = BeanHelper.findFields(__modelClazz, filterAnnotations = Seq())
+  protected val __textFields = __allAnnotations.filter(_.annotation.isInstanceOf[Text]).map {
+    field =>
+      field.fieldName
+  }.toList
+  protected val __allFields = collection.mutable.Map[String, String]()
+  BeanHelper.findFields(__modelClazz, filterAnnotations = Seq()).map {
+    item =>
+      val ttype = item._1 match {
+        case name if __textFields.contains(name) => "text"
+        case _ => item._2
+      }
+      __allFields += item._1 -> ttype
+  }
   protected val __ignoreFields = __allFields.filter {
     field =>
       __allAnnotations.filter(_.fieldName == field._1).exists {
@@ -47,7 +59,6 @@ trait Storable[M <: AnyRef, Q <: AnyRef] extends LazyLogging {
       }
   }.map(_._1).toList
   protected val __persistentFields = __allFields.filter(field => !__ignoreFields.contains(field._1))
-
 
 
   logger.info( """Create Storage Service: model: %s""".format(__modelClazz.getSimpleName))

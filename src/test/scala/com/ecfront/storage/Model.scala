@@ -19,7 +19,7 @@ case class Role() extends IdModel {
 
 @Entity(idField = "id", desc = "资源表")
 case class Resource() extends IdModel {
-  @BeanProperty var name: String = _
+  @BeanProperty @Text var name: String = _
 }
 
 @Entity(idField = "id", desc = "账户表")

@@ -16,7 +16,7 @@
     <description>存储模块</description>
     <url>https://github.com/gudaoxuri/ez-storage</url>
     <packaging>jar</packaging>
-    <version>0.2.6</version>
+    <version>0.2.7</version>
 
     <scm>
         <connection>scm:git:git@github.com:gudaoxuri/ez-storage.git</connection>
@@ -26,7 +26,7 @@
 
     <properties>
         <ez-common.version>0.4.2</ez-common.version>
-        <ez-dbutils.version>2.5.0</ez-dbutils.version>
+        <ez-dbutils.version>2.5.1</ez-dbutils.version>
     </properties>
 
     <dependencies>
