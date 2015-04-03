@@ -2,7 +2,7 @@ package com.ecfront.storage
 
 import scala.beans.BeanProperty
 
-@Entity(idField = "id", desc = "角色表")
+@Entity(desc = "角色表")
 case class Role() extends IdModel {
   @Desc("code")
   @Index
@@ -17,19 +17,19 @@ case class Role() extends IdModel {
   @BeanProperty var accountIds: List[String] = List()
 }
 
-@Entity(idField = "id", desc = "资源表")
+@Entity("资源表")
 case class Resource() extends IdModel {
   @BeanProperty @Text var name: String = _
 }
 
-@Entity(idField = "id", desc = "账户表")
+@Entity("账户表")
 case class Account() extends IdModel {
   @ManyToMany(mapping = "Role", master = true, fetch = true)
   @BeanProperty var roleIds: List[String] = List()
 }
 
 abstract class IdModel {
-  @BeanProperty var id: String = _
+  @BeanProperty @Id var id: String = _
 }
 
 object IdModel {

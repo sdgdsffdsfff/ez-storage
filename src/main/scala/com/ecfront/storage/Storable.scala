@@ -19,9 +19,9 @@ trait Storable[M <: AnyRef, Q <: AnyRef] extends LazyLogging {
     logger.error("The storage entity must has Entity annotation.")
     null
   }
-  protected val __idField = __classAnnotation.idField
   protected val __tableDesc = __classAnnotation.desc
   protected val __allAnnotations = BeanHelper.findFieldAnnotations(__modelClazz)
+  protected val __idField = __allAnnotations.find(_.annotation.isInstanceOf[Id]).map(_.fieldName).get
   protected val __manyToManyFields = __allAnnotations.filter(_.annotation.isInstanceOf[ManyToMany]).map {
     field =>
       (field.annotation.asInstanceOf[ManyToMany], field.fieldName)

@@ -41,7 +41,9 @@ object PageModel {
   }
 }
 
-case class Entity(idField: String,desc:String) extends StaticAnnotation
+case class Entity(desc:String) extends StaticAnnotation
+@scala.annotation.meta.field
+case class Id() extends StaticAnnotation
 @scala.annotation.meta.field
 case class Text() extends StaticAnnotation
 @scala.annotation.meta.field
